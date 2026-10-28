@@ -5,6 +5,7 @@ import (
 	"image/jpeg"
 	_ "image/png"
 	"os"
+	"path/filepath"
 )
 
 type PNG2JPG struct {
@@ -25,15 +26,28 @@ func (ptj PNG2JPG) Convert() error {
 		return err
 	}
 
-	//TODO: write to temp file and rename after successful conversion to prevent
-	// partial file
-	output, err := os.Create(ptj.OutputPath)
+	outputDir := filepath.Dir(ptj.OutputPath)
+
+	output, err := os.CreateTemp(outputDir, ".png2jpg-*.tmp")
 	if err != nil {
 		return err
 	}
-	defer output.Close()
 
-	if err := jpeg.Encode(output, img, &jpeg.Options{Quality: ptj.Quality}); err != nil {
+	tempPath := output.Name()
+	defer os.Remove(tempPath)
+
+	if err := jpeg.Encode(output, img, &jpeg.Options{
+		Quality: ptj.Quality,
+	}); err != nil {
+		output.Close()
+		return err
+	}
+
+	if err := output.Close(); err != nil {
+		return err
+	}
+
+	if err := os.Rename(tempPath, ptj.OutputPath); err != nil {
 		return err
 	}
 

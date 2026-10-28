@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/Yondondon/image-converter/converter"
 	"github.com/spf13/cobra"
@@ -21,10 +23,10 @@ var png2jpgCmd = &cobra.Command{
 			return err
 		}
 
-		// TODO: change from 'required' to output in the same directory if this flag
-		// isn't provided
 		if outputPath == "" {
-			return fmt.Errorf("output path can't be an empty string")
+			dir := filepath.Dir(inputPath)
+			name := strings.TrimSuffix(filepath.Base(inputPath), filepath.Ext(inputPath))
+			outputPath = filepath.Join(dir, name+".jpg")
 		}
 
 		if quality < 1 || quality > 100 {
@@ -51,7 +53,7 @@ func init() {
 	rootCmd.AddCommand(png2jpgCmd)
 
 	f := png2jpgCmd.Flags()
-	f.StringP("output", "o", "", "(required) Output file path")
+	f.StringP("output", "o", "", "Output file path. Converted image will be placed in the same directory if output isn't provided")
 	f.IntVarP(&quality, "quality", "q", 85, "JPEG quality (1-100)")
 
 }
